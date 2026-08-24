@@ -1,0 +1,125 @@
+import numpy as np
+
+'''
+Script used to generate sequence-matching data
+'''
+
+class SequenceDataset:
+    def __init__(self, num_samples, width, delay=2, length=100, spike_threshold=0.1):
+        self.num_samples = num_samples
+        self.width = width
+        self.delay = delay
+        self.length = length
+        self.spike_threshold = spike_threshold
+
+        self.data = []
+
+        self.initialise()
+
+    def initialise(self):
+        for i in range(self.num_samples):
+            sample = np.random.rand(self.width, self.length)
+            sample = np.where(sample > 1 - self.spike_threshold, 1, 0)
+
+            target = sample.copy()
+            # Shift over by delay
+            target = np.roll(target, self.delay, axis=1)
+            target[:, :self.delay] = 0
+
+            self.data.append((sample, target))
+
+    def __iter__(self):
+        for sample, target in self.data:
+            yield sample, target
+
+    def __len__(self):
+        return self.num_samples
+
+class PatternDataset:
+    def __init__(
+        self,
+        num_samples,
+        width=5,
+        length=100,
+        spike_prob=0.05,
+        pattern_neurons=(0, 1, 2),
+        num_patterns=1,
+    ):
+        self.num_samples = num_samples
+        self.width = width
+        self.length = length
+        self.spike_prob = spike_prob
+        self.pattern_neurons = pattern_neurons
+        self.num_patterns = num_patterns
+
+        self.pattern_length = len(pattern_neurons)
+
+        self.data = []
+
+        self.initialise()
+
+    def initialise(self):
+        for _ in range(self.num_samples):
+
+            # ----------------------------
+            # Random background spikes
+            # ----------------------------
+            sample = (
+                np.random.rand(self.width, self.length)
+                < self.spike_prob
+            ).astype(int)
+
+            # One output neuron
+            target = np.zeros((1, self.length), dtype=int)
+
+            # ----------------------------
+            # Insert patterns
+            # ----------------------------
+            for _ in range(self.num_patterns):
+
+                # Need space for pattern + target spike
+                max_start = (
+                    self.length
+                    - self.pattern_length
+                    - 1
+                )
+
+                start = np.random.randint(
+                    0,
+                    max_start + 1
+                )
+
+                # Insert temporal pattern
+                for offset, neuron in enumerate(
+                    self.pattern_neurons
+                ):
+                    sample[
+                        neuron,
+                        start + offset
+                    ] = 1
+
+                # Teacher spike immediately after pattern
+                target[
+                    0,
+                    start + self.pattern_length #- 1
+                ] = 1
+
+            self.data.append((sample, target))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+    def __iter__(self):
+        return iter(self.data)
+
+if __name__ == '__main__':
+    ds = SequenceDataset(10, 5, length=20)
+
+    for sample, target in ds.data:
+        print(sample.shape, target.shape)
+
+    print(ds.data[0][0])
+    print(ds.data[0][1])

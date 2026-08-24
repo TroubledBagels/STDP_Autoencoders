@@ -1,5 +1,4 @@
-import Layer as L
-import Neurons as N
+import network_model.Layer as L
 import numpy as np
 
 class Network:
@@ -9,6 +8,10 @@ class Network:
     def add(self, layer):
         self.layers.append(layer)
 
+    def reset_state(self):
+        for layer in self.layers:
+            layer.reset_state()
+
     def __str__(self):
         string = ""
         for i, layer in enumerate(self.layers):
@@ -16,9 +19,13 @@ class Network:
 
         return string
 
-    def __call__(self, inputs):
-        for layer in self.layers:
-            inputs = layer(inputs)
+    def __call__(self, inputs, target=None, learn=False):
+        trace = None
+        for i, layer in enumerate(self.layers):
+            if i == len(self.layers) - 1:
+                inputs, trace = layer(inputs, trace, target, learn=learn, competitive=False)
+            else:
+                inputs, trace = layer(inputs, trace, learn=learn, competitive=True)
         return inputs
 
     def get_spike_records(self):
