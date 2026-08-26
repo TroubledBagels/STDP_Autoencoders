@@ -2,6 +2,7 @@ import network_model.Network as N
 import network_model.Layer as L
 import network_model.GenerateData as GD
 import numpy as np
+import matplotlib.pyplot as plt
 
 ds = GD.PatternDataset(num_samples=100, width=5, length=100, spike_prob=0.05, pattern_neurons=(0, 1, 2), num_patterns=1)
 
@@ -47,6 +48,10 @@ for epoch in range(20):
             # print(net.layers[0].weights)
 
         i += 1
+    print(f"Epoch: {epoch}")
+    print("Layer 1 Train Winner Count:")
+    print(net.layers[0].winner_count)
+    net.layers[0].winner_count = np.zeros(net.layers[0].layer_size)
 
     # print(net.layers[0].weights)
     # print(net.layers[0].post_trace)
@@ -106,15 +111,48 @@ for epoch in range(20):
 
     MSE /= len(test_ds)
 
-    # print(f"Final MSE for Epoch {epoch+1}: {MSE}")
-    print(f"Epoch: {epoch}")
-    print(f"    Prec: {precision}")
-    print(f"    Recall: {recall}")
-    print(f"    F1: {f1}")
+    print(f"Final MSE for Epoch {epoch+1}: {MSE}")
+    print(f"Prec: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1: {f1}")
     print("Layer 1:")
     print(np.round(net.layers[0].weights, 2))
     print("Layer 2:")
     print(np.round(net.layers[1].weights, 2))
+    print("Layer 1 Test Winner Count:")
+    print(net.layers[0].winner_count)
+    net.layers[0].winner_count = np.zeros(net.layers[0].layer_size)
 
     # print(net.layers[0].weights)
     # print(net.layers[1].weights)
+
+dt = np.array(
+    net.layers[0].stdp_dt
+)
+
+dw = np.array(
+    net.layers[0].stdp_dw
+)
+
+plt.scatter(
+    dt,
+    dw,
+    alpha=0.1,
+    s=5
+)
+
+plt.axhline(0)
+plt.axvline(0)
+
+plt.xlabel(
+    r"$\Delta t = t_{post} - t_{pre}$"
+)
+plt.ylabel(
+    r"$\Delta w$"
+)
+
+plt.title(
+    "Empirical STDP Events During Training"
+)
+
+plt.show()

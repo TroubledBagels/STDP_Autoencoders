@@ -6,7 +6,12 @@ class Network:
         self.layers = []
 
     def add(self, layer):
-        self.layers.append(layer)
+        if isinstance(layer, L.FCLayer):
+            self.layers.append(layer)
+        elif isinstance(layer, list):
+            for l in layer:
+                if isinstance(l, L.FCLayer):
+                    self.layers.append(l)
 
     def reset_state(self):
         for layer in self.layers:
@@ -57,7 +62,7 @@ def interpret_records(spike_records: list):
 
 if __name__ == "__main__":
     network = Network()
-    network.add(L.FCLayer(2, 4))
+    network.add(L.FCLayer(2, 4, k_winners=10))
     network.add(L.FCLayer(4, 6))
 
     test_inp = np.array([[1, 1], [0, 1], [0, 0], [1, 0]])

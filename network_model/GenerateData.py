@@ -115,6 +115,50 @@ class PatternDataset:
     def __iter__(self):
         return iter(self.data)
 
+class ClusterPatternDataset:
+    def __init__(
+        self,
+        num_samples=1000,
+        noise_prob=0.05
+    ):
+        self.patterns = np.array([
+            [1,1,1,0,0,0,0,0,0,0],
+            [0,0,0,1,1,1,0,0,0,0],
+            [0,0,0,0,0,0,1,1,1,0],
+        ])
+
+        self.num_samples = num_samples
+        self.noise_prob = noise_prob
+        self.data = []
+
+        self.initialise()
+
+    def initialise(self):
+        for _ in range(self.num_samples):
+
+            label = np.random.randint(
+                len(self.patterns)
+            )
+
+            sample = self.patterns[label].copy()
+
+            noise = (
+                np.random.rand(10)
+                < self.noise_prob
+            )
+
+            sample = np.logical_xor(
+                sample,
+                noise
+            ).astype(int)
+
+            self.data.append(
+                (sample, label)
+            )
+
+    def __iter__(self):
+        return iter(self.data)
+
 if __name__ == '__main__':
     ds = SequenceDataset(10, 5, length=20)
 
