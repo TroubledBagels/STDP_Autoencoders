@@ -62,8 +62,8 @@ def interpret_records(spike_records: list):
 
 if __name__ == "__main__":
     network = Network()
-    network.add(L.FCLayer(2, 4, k_winners=10))
-    network.add(L.FCLayer(4, 6))
+    network.add(L.STDP_FCLayer(2, 4, k_winners=10))
+    network.add(L.STDP_FCLayer(4, 6))
 
     test_inp = np.array([[1, 1], [0, 1], [0, 0], [1, 0]])
 

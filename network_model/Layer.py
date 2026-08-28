@@ -7,8 +7,7 @@ class NeuronType(Enum):
     LIF_subtract = 2
     Hodgkin = 3
 
-
-class FCLayer:
+class STDP_FCLayer:
     def __init__(
         self,
         input_num,
@@ -18,9 +17,9 @@ class FCLayer:
         k_winners=3,
         record_stdp=False,
         stdp_max_dt=50,
-        record_state=False,
+        record_state=False
     ):
-        self.name = "FC"
+        self.name = "STDP FC"
         self.n_type = n_type
 
         self.input_num = input_num
@@ -366,26 +365,12 @@ class FCLayer:
         return dt, mean_dw, self.stdp_count.copy()
 
     def reset_state(self):
-        """
-        Reset fast state between independent
-        samples.
-
-        Do NOT reset:
-          - weights
-          - adaptive thresholds
-          - winner_count
-          - accumulated STDP statistics
-        """
-
         self.u[:] = 0
         self.post_trace[:] = 0
 
         if self.is_first:
             self.pre_trace[:] = 0
 
-        # Important: prevent spike timing
-        # relationships spanning two
-        # independent audio files.
         self.time = 0
 
         self.last_pre_spike[:] = np.nan
@@ -414,6 +399,75 @@ class FCLayer:
     def reset_request(self):
         self.ltp_requests[:] = 0
         self.ltd_requests[:] = 0
+
+    def __str__(self):
+        return f"{self.name}: {self.input_num} in -> {self.layer_size} out"
+
+    def __repr__(self):
+        return self.__str__()
+
+class CMAES_FCLayer:
+    def __init__(self, input_num: int, layer_size: int, record_state: bool = False, n_type: NeuronType = NeuronType.LIF_total, decay: float = 0.9):
+        self.name = "CMAES FC"
+
+        self.input_num = input_num
+        self.layer_size = layer_size
+
+        self.u = np.zeros(layer_size)
+        self.weights = np.random.uniform(0.02, 0.15, size=(input_num, layer_size))
+        self.threshold = 1.0
+
+        self.record_state = record_state
+
+        self.spike_record = []
+        self.mem_pot_record = []
+
+        self.n_type = n_type
+
+        self.learning = True
+
+        self.decay = decay
+
+    def __call__(self, inputs):
+        if len(inputs) != self.input_num:
+            raise ValueError("The number of inputs is not equal to the number of neurons")
+
+        inputs = np.asarray(inputs)
+
+        new_mem_pot = np.dot(inputs, self.weights)
+
+        spikes = self.update_u(new_mem_pot)
+
+        if self.record_state:
+            self.spike_record.append(spikes.copy())
+            self.mem_pot_record.append(self.u.copy())
+
+        return spikes
+
+    def update_u(self, mem_pot_update):
+        if self.n_type != NeuronType.LIF_total:
+            raise NotImplementedError(f"{self.n_type} not implemented")
+
+        self.u += mem_pot_update
+
+        spikes = (self.u >= self.threshold).astype(int)
+
+        self.u[spikes == 1] = 0
+
+        self.u = np.clip(self.u, 0, None)
+
+        self.u *= self.decay
+
+        return spikes
+
+    def get_params(self):
+        return self.weights
+
+    def set_params(self, theta):
+        self.weights = theta.reshape(self.input_num, self.layer_size)
+
+    def reset_state(self):
+        self.u[:] = 0
 
     def __str__(self):
         return f"{self.name}: {self.input_num} in -> {self.layer_size} out"

@@ -220,9 +220,9 @@ if __name__ == "__main__":
 
     model = N.Network()
     model.add([
-        L.FCLayer(input_num=10, layer_size=10, k_winners=7, is_first=True),
+        L.STDP_FCLayer(input_num=10, layer_size=10, k_winners=7, is_first=True),
         # L.FCLayer(input_num=60, layer_size=60),
-        L.FCLayer(input_num=10, layer_size=10)
+        L.STDP_FCLayer(input_num=10, layer_size=10)
     ])
 
     train(model, tr_dl, te_dl)

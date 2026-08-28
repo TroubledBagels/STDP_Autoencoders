@@ -10,8 +10,8 @@ test_ds = GD.SequenceDataset(num_samples=100, width=10, delay=0, spike_threshold
 
 net = N.Network()
 
-net.add(L.FCLayer(10, 10, is_first=True))
-net.add(L.FCLayer(10, 10))
+net.add(L.STDP_FCLayer(10, 10, is_first=True))
+net.add(L.STDP_FCLayer(10, 10))
 # print(net.layers[0].weights)
 
 # net.layers[0].weights[:] = 0.5
