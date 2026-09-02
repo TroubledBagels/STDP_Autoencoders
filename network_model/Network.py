@@ -6,12 +6,10 @@ class Network:
         self.layers = []
 
     def add(self, layer):
-        if isinstance(layer, L.FCLayer):
+        if isinstance(layer, list):
+            self.layers.extend(layer)
+        else:
             self.layers.append(layer)
-        elif isinstance(layer, list):
-            for l in layer:
-                if isinstance(l, L.FCLayer):
-                    self.layers.append(l)
 
     def reset_state(self):
         for layer in self.layers:
